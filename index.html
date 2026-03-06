@@ -129,7 +129,26 @@ function go(n){var pgs=document.querySelectorAll(".pg");for(var i=0;i<pgs.length
 function toggleMusic(){if(!audioEl){audioEl=new Audio("musica.mp3");audioEl.loop=true;audioEl.addEventListener("timeupdate",function(){if(!audioEl.duration)return;var f=document.getElementById("mpfill");if(f)f.style.width=((audioEl.currentTime/audioEl.duration)*100)+"%";});}var btn=document.getElementById("mpbtn");if(audioEl.paused){audioEl.play().then(function(){btn.innerHTML="&#9646;&#9646;";}).catch(function(){toast("Adicione musica.mp3");});}else{audioEl.pause();btn.innerHTML="&#9654;";}}
 function seekMusic(e){if(!audioEl||!audioEl.duration)return;audioEl.currentTime=(e.offsetX/e.currentTarget.offsetWidth)*audioEl.duration;}
 function callWA(t){var target=who==="K"?MARIA_WA:KADU_WA;window.open("https://wa.me/"+target,"_blank");}
-if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});
+if("serviceWorker"in navigator){
+navigator.serviceWorker.getRegistrations().then(function(regs){
+  regs.forEach(function(r){r.unregister();});
+});
+navigator.serviceWorker.register("sw.js?v=1772754935").then(function(reg){
+  reg.addEventListener("updatefound",function(){
+    var w=reg.installing;
+    w.addEventListener("statechange",function(){
+      if(w.state==="installed"&&navigator.serviceWorker.controller){
+        w.postMessage({type:"SKIP_WAITING"});
+        window.location.reload();
+      }
+    });
+  });
+  setInterval(function(){reg.update();},10000);
+});
+navigator.serviceWorker.addEventListener("controllerchange",function(){
+  window.location.reload();
+});
+}
 var deferredPrompt,installBanner=null;
 window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();deferredPrompt=e;setTimeout(function(){if(installBanner)return;installBanner=document.createElement("div");installBanner.style.cssText="position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,#c0395a,#7a1e36);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;z-index:9999;font-family:Lato,sans-serif;font-size:.88rem;font-weight:700;";installBanner.innerHTML="<span>Instalar no celular?</span><div style=\"display:flex;gap:8px\"><button onclick=\"if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;}installBanner.remove();installBanner=null;\" style=\"background:#fff;color:#c0395a;border:none;padding:7px 16px;border-radius:50px;font-weight:700;cursor:pointer\">Instalar</button><button onclick=\"installBanner.remove();installBanner=null;\" style=\"background:none;border:1px solid rgba(255,255,255,.5);color:#fff;padding:7px 12px;border-radius:50px;cursor:pointer\">Depois</button></div>";document.body.appendChild(installBanner);},3000);});
 document.addEventListener("click",function(e){if(e.target.closest(".qc,.sendb,.wab,.sb,.excl-btn"))burst();});
@@ -141,7 +160,7 @@ function delMusica(id,e){e.stopPropagation();db.collection("musicas").doc(id).de
 function playMusica(idx){muIdx=idx;var m=muList[idx];var pl=document.getElementById("mu-player"),au=document.getElementById("mu-audio"),nm=document.getElementById("mu-playing");pl.style.display="block";au.src=m.url;au.play().catch(function(){toast("Nao foi possivel tocar. Verifique o link.");});nm.textContent="Tocando: "+m.nome;renderMusicas();}
 function renderMusicas(){var el=document.getElementById("mu-list");if(!el)return;if(!muList.length){el.innerHTML="<div style=\"text-align:center;color:var(--mu);padding:30px;font-style:italic\">Nenhuma musica ainda. Cole um link acima!</div>";return;}var h="";for(var i=0;i<muList.length;i++){var m=muList[i],isp=muIdx===i;h+="<div class=\"mu-item"+(isp?" playing":"")+"\" onclick=\"playMusica("+i+")\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polygon points=\"5 3 19 12 5 21 5 3\" fill=\""+( isp?"var(--rose)":"none")+"\"/></svg><div class=\"mu-info\"><div class=\"mu-name\">"+esc(m.nome)+"</div><div class=\"mu-url\">"+esc(m.url)+"</div></div><button class=\"mu-del\" onclick=\"delMusica('"+m.id+"',event)\">&#128465;</button></div>";}el.innerHTML=h;}
 
-var _VER="1772753544";
+var _VER="1772754935";
 function checkUpdate(){fetch("index.html?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text();}).then(function(t){var m=t.match(/var _VER="(\d+)"/);if(m&&m[1]!==_VER){if(confirm("Nova versao disponivel! Atualizar agora?")){window.location.reload(true);}}}).catch(function(){});}
 setInterval(checkUpdate,30000);
 </script></body></html>
